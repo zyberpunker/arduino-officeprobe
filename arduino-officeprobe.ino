@@ -4,6 +4,7 @@
 */
 
 #include <ESP8266WiFi.h>
+#include "DHT.h"
 
 // WiFi Settings
 const char* ssid     = "<oid>";
@@ -11,19 +12,25 @@ const char* password = "<pass>";
 
 // Monitor Settings
 const char* mon_host = "<monitor host>";
-const int httpsPort = <https port>;
+int httpsPort = 82;
   //encode op5 Monitor <user>:<pass> to base64 
-const char* mon_token = "<base64 user:pass>";
+const char* mon_token = "<base64>";
 
 //Host and Service Settings
-String host = "<host name>";
-String service = "<service name>";
+String host = "<host>";
+String service = "<service>";
+
+//Temp & Humidity Settings
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
 
 String data;
 
 void setup() {
   Serial.begin(115200);
   delay(10);
+  dht.begin();
 
   // We start by connecting to a WiFi network
 
@@ -49,6 +56,24 @@ void setup() {
 void loop() {
   delay(5000);
 
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius
+  float t = dht.readTemperature();
+
+  Serial.print("Humidity: "); 
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: "); 
+  Serial.print(t);
+  Serial.println(" *C ");
+
+
+
+  delay(1000);
+
+// Send to monitor
   Serial.println("");
   Serial.print("connecting to ");
   Serial.println(mon_host);
@@ -66,7 +91,7 @@ void loop() {
   String url = "/api/command/PROCESS_SERVICE_CHECK_RESULT";
 
   Serial.print("Requesting URL: ");
-  Serial.println(url);
+  Serial.println(mon_host + httpsPort + url);
 
   // This will send the request to the server
 
